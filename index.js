@@ -8,6 +8,7 @@ const LocalStorage = require('node-localstorage').LocalStorage;
 const SlackStrategy = require('@aoberoi/passport-slack').default.Strategy;
 const http = require('http');
 const express = require('express');
+const bodyParser = require('body-parser');
 
 const fs = require('fs');
 let creds = JSON.parse(fs.readFileSync('secrets.json'));
@@ -60,15 +61,17 @@ app.get('/auth/slack', passport.authenticate('slack', {
 app.get('/auth/slack/callback',
   passport.authenticate('slack', { session: false }),
   (req, res) => {
-    res.send('<p>Greet and React was successfully installed on your team.</p>');
+    res.send('<p>Fight Bot was successfully installed on your team.</p>');
   },
   (err, req, res, next) => {
-    res.status(500).send(`<p>Greet and React failed to install</p> <pre>${err}</pre>`);
+    res.status(500).send(`<p>Fight Bot failed to install</p> <pre>${err}</pre>`);
   }
 );
 
 // *** Plug the event adapter into the express app as middleware ***
 app.use('/slack/events', slackEvents.expressMiddleware());
+
+app.post('/slack/command', bodyParser.urlencoded({ extended: false }), slackSlashCommand);
 
 // *** Attach listeners to the event adapter ***
 
@@ -107,12 +110,37 @@ slackEvents.on('reaction_added', (event, body) => {
   (async () => {
     try {
       // Respond to the message back in the same channel
-      const response = await slack.chat.postMessage({ channel: event.item.channel, text: `:${event.reaction}:` });
+      const response = await slack.chat.postMessage({ channel: event.item.channel, text: `Nerd :${event.reaction}:` });
     } catch (error) {
       console.log(error.data);
     }
   })();
 });
+
+function testFight(players)  
+{
+  const winner = players[Math.floor(Math.random() * players.length)];
+  
+  const t = `${players[0]} vs ${players[1]} \n Winner is ${winner}`;
+  return {
+    text: t,
+    response_type: 'in_channel'
+  };
+};
+
+// Slack slash command handler
+function slackSlashCommand(req, res, next) {
+  if (req.body.command === '/fight') {
+    const args = req.body.text.split(' ');
+    if (args.length == 2) {
+      res.json(testFight(args));
+    } else {
+      res.send('Use this command followed by `Player 1` `Player 2`.');
+    }
+  } else {
+    next();
+  }
+}
 
 // *** Handle errors ***
 slackEvents.on('error', (error) => {
