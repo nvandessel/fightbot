@@ -117,3 +117,6 @@ dist
 
 #secrets
 secrets.json
+
+#Storage
+storage/
