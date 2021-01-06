@@ -1,4 +1,3 @@
-// Load environment variables from `.env` file (optional)
 require('dotenv').config();
 
 const { createEventAdapter } = require('@slack/events-api');
@@ -11,7 +10,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 
 const fs = require('fs');
-let creds = JSON.parse(fs.readFileSync('secrets.json'));
+const creds = JSON.parse(fs.readFileSync('secrets.json'));
 
 // *** Initialize event adapter using signing secret from environment variables ***
 const slackEvents = createEventAdapter(creds.SLACK_SIGNING_SECRET, {
@@ -128,6 +127,55 @@ function testFight(players)
   };
 };
 
+function randomFight()  
+{
+  const p1 = `:${returnRandomFromArray(names)}-p1:`;
+  const p2 = `:${returnRandomFromArray(names)}-p2:`;
+  const players = [p1, p2]
+  const winner = returnRandomFromArray(players);
+  
+  const t = `${players[0]} vs ${players[1]} \n Winner is ${winner}`;
+  return {
+    text: t,
+    response_type: 'in_channel'
+  };
+};
+
+function returnRandomFromArray(arr)
+{
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+const names = [
+  'akuma',
+  'balrog',
+  'blanka',
+  'cammy',
+  'chun-li',
+  'cyrax',
+  'deejay',
+  'dhalsim',
+  'e-honda',
+  'goro',
+  'guile',
+  'johnny-cage',
+  'ken',
+  'link',
+  'liu-kang',
+  'm-bison',
+  'ness',
+  'raiden',
+  'reptile',
+  'ryu',
+  'sagat',
+  'scorpion',
+  'shang-tsung',
+  'snake',
+  'sonya',
+  'sub-zero',
+  'vega',
+  'zangief'];
+
 // Slack slash command handler
 function slackSlashCommand(req, res, next) {
   if (req.body.command === '/fight') {
@@ -135,7 +183,7 @@ function slackSlashCommand(req, res, next) {
     if (args.length == 2) {
       res.json(testFight(args));
     } else {
-      res.send('Use this command followed by `Player 1` `Player 2`.');
+      res.json(randomFight());
     }
   } else {
     next();
